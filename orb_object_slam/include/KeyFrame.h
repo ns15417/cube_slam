@@ -165,6 +165,7 @@ public:
     static long unsigned int nNextId;
     long unsigned int mnId;            // key frame id
     const long unsigned int mnFrameId; // frame id in all images
+    long unsigned int mnFrameSequenceId; //shinan:Image name in my computer
 
     const double mTimeStamp;
 

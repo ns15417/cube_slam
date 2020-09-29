@@ -429,6 +429,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
 		if ((!mono_firstframe_truth_depth_init) || (mCurrentFrame.mnId > 0))
 		{
 			mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth);
+			mCurrentFrame.mnSequenceId = msg_seq_id;
 		}
 		else
 		{ // read (truth) depth /stereo image for first frame
@@ -442,11 +443,13 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
 				ROS_WARN_STREAM("Read first right stereo size  " << right_stereo_img.rows);
 			std::cout << "Read first right depth size  " << right_stereo_img.rows << "  baseline  " << mbf << std::endl;
 			mCurrentFrame = Frame(mImGray, right_stereo_img, timestamp, mpORBextractorLeft, mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth);
+			mCurrentFrame.mnSequenceId = msg_seq_id;
 		}
 	}
 	else
 	{
 		mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth); // create new frames.
+		mCurrentFrame.mnSequenceId = msg_seq_id;
 	}
 
 	if (mCurrentFrame.mnId == 0)

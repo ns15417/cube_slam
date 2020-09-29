@@ -195,6 +195,7 @@ public:
     // Current and Next Frame id.
     static long unsigned int nNextId; // NOTE this is global static, will automatically increase when keyframe is created.
     long unsigned int mnId;
+    long unsigned int mnSequenceId;
 
     // Reference Keyframe.  the past keyframe which shares most MapPoints with this frame. if current frame later becomes keyframe. then it is itself
     KeyFrame *mpReferenceKF;
