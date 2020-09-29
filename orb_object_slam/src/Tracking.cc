@@ -1593,7 +1593,7 @@ void Tracking::DetectCuboid(KeyFrame *pKF)
 		std::cout << "current edge dir: " << data_edge_data_dir << endl;
 		std::cout << "current obj dir: "<< data_yolo_obj_dir << endl;
 		char frame_index_c[256];
-		sprintf(frame_index_c, "%04d", (int)pKF->mnFrameId); // format into 4 digit
+		sprintf(frame_index_c, "%04d", (int)pKF->mnFrameSequenceId); // format into 4 digit
 
 		// read detected edges
 		Eigen::MatrixXd all_lines_raw(100, 4); // 100 is some large frame number,   the txt edge index start from 0
@@ -1606,7 +1606,7 @@ void Tracking::DetectCuboid(KeyFrame *pKF)
 		std::vector<string> object_classes;
 		char obj_2d_txt_postfix[256];
 		sprintf(obj_2d_txt_postfix, "_yolo2_%.2f.txt", obj_det_2d_thre);
-		std::string frame_id_str = std::to_string(pKF->mnFrameId);
+		std::string frame_id_str = std::to_string(pKF->mnFrameSequenceId);
 		if (!read_obj_detection_txt(data_yolo_obj_dir + frame_id_str + obj_2d_txt_postfix, raw_all_obj2d_bbox, object_classes))
 			ROS_ERROR_STREAM("Cannot read yolo txt  " << data_yolo_obj_dir + frame_index_c + obj_2d_txt_postfix);
         std::cout << __FUNCTION__ << " FInished Reading yolo detection file " << endl;
