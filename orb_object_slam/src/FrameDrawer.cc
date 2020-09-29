@@ -28,13 +28,22 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include <mutex>
-
+#include <math.h>
+#include <algorithm>
 #include "Parameters.h"
 #include "Converter.h"
 #include "detect_3d_cuboid/object_3d_util.h"
 #include "MapObject.h"
 
 using namespace std;
+
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
 
 namespace ORB_SLAM2
 {
@@ -106,10 +115,11 @@ cv::Mat FrameDrawer::DrawFrame()
 
     if (im.channels() < 3) //this should be always true
         cvtColor(im, im, CV_GRAY2BGR);
-
+    std::cout << __FUNCTION__ << state <<endl;
     //Draw
     if (state == Tracking::NOT_INITIALIZED) //INITIALIZING
     {
+        std::cout << "state == Tracking::NOT_INITIALIZED"<< endl;
         for (unsigned int i = 0; i < vMatches.size(); i++)
         {
             if (vMatches[i] >= 0)
@@ -121,6 +131,7 @@ cv::Mat FrameDrawer::DrawFrame()
     }
     else if (state == Tracking::OK) //TRACKING
     {
+        std::cout << "state == Tracking::OK"<< endl;
         mnTracked = 0;
         mnTrackedVO = 0;
         const float r = 5; // rectangle width
@@ -128,12 +139,16 @@ cv::Mat FrameDrawer::DrawFrame()
         {
             if (vbVO[i] || vbMap[i]) // matched to map, VO point (rgbd/stereo)
             {
+                std::cout << "i= " << i << " ";
+                cout << "vCurrentKeys[i].pt: " << vCurrentKeys[i].pt.x << " " << vCurrentKeys[i].pt.y<< endl;
                 cv::Point2f pt1, pt2;
-                pt1.x = vCurrentKeys[i].pt.x - r;
-                pt1.y = vCurrentKeys[i].pt.y - r;
-                pt2.x = vCurrentKeys[i].pt.x + r;
-                pt2.y = vCurrentKeys[i].pt.y + r;
-
+                if(isnan(vCurrentKeys[i].pt.x) || isnan(vCurrentKeys[i].pt.y)|| vCurrentKeys[i].pt.x>639 || vCurrentKeys[i].pt.y >479
+                ||vCurrentKeys[i].pt.x<1 || vCurrentKeys[i].pt.y <1 ) continue;
+                pt1.x = max(vCurrentKeys[i].pt.x - r,0);
+                pt1.y = max(vCurrentKeys[i].pt.y - r,0);
+                pt2.x = min(vCurrentKeys[i].pt.x + r,im.cols-1);
+                pt2.y = min(vCurrentKeys[i].pt.y + r,im.rows-1);
+                cout << "pt1.x  pt1.y pt2.x pt2.y: " << pt1.x << " " << pt1.y << " " << pt2.x << " " << pt2.y << endl;
                 if (vbMap[i]) // This is a match to a MapPoint in the map    // green
                 {
                     cv::circle(im, vCurrentKeys[i].pt, 3, cv::Scalar(0, 255, 0), -1);

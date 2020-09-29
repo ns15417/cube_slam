@@ -53,9 +53,16 @@ void detect_3d_cuboid::set_cam_pose(const Matrix4d &transToWolrd)
 	//TODO relative measure? not good... then need to change transToWolrd.
 }
 
+/**
+ * detect_cuboid: 利用圖像和二位的boundingbox進行三維cube的檢測；
+ * rgb_img: input: 彩色圖像
+ * obj_bbox_coors: 當前圖像的boundingbox，每一行代表一個物體；
+ * all_object_cuboids：檢測到的ｃｕｂｅ
+*/
 void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &transToWolrd, const MatrixXd &obj_bbox_coors,
 									 MatrixXd all_lines_raw, std::vector<ObjectSet> &all_object_cuboids)
 {
+	std::cout << "Start to detect cubo in single image "<< endl;
 	set_cam_pose(transToWolrd);
 	cam_pose_raw = cam_pose;
 
@@ -70,7 +77,7 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 
 	int num_2d_objs = obj_bbox_coors.rows();
 	all_object_cuboids.resize(num_2d_objs);
-
+    std::cout << "detected object number: " << num_2d_objs << endl;
 	vector<bool> all_configs;
 	all_configs.push_back(consider_config_1);
 	all_configs.push_back(consider_config_2);
@@ -86,10 +93,11 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 	double weight_vp_angle = 0.8;
 	double weight_skew_error = 1.5;
 	// if also consider config2, need to weight two erros, in order to compare two configurations
-
+    cout << "whether_plot_detail_images: " << whether_plot_detail_images<< endl;
 	align_left_right_edges(all_lines_raw); // this should be guaranteed when detecting edges
 	if (whether_plot_detail_images)
 	{
+		std::cout << " plot_image_with_edges "<< endl;
 		cv::Mat output_img;
 		plot_image_with_edges(rgb_img, output_img, all_lines_raw, cv::Scalar(255, 0, 0));
 		cv::imshow("Raw detected Edges", output_img); //cv::waitKey(0);
@@ -97,6 +105,7 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 
 	// find ground-wall boundary edges
 	Vector4d ground_plane_world(0, 0, 1, 0); // treated as column vector % in my pop-up code, I use [0 0 -1 0]. here I want the normal pointing innerwards, towards the camera to match surface normal prediction
+	std::cout << "cam_pose: " << cam_pose.transToWolrd.transpose() << endl;
 	Vector4d ground_plane_sensor = cam_pose.transToWolrd.transpose() * ground_plane_world;
 
 	//       int object_id=1;
@@ -110,15 +119,22 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 		int obj_height_raw = obj_bbox_coors(object_id, 3);
 		int right_x_raw = left_x_raw + obj_bbox_coors(object_id, 2);
 		int down_y_raw = top_y_raw + obj_height_raw;
-
+		
+		// int right_x_raw = obj_bbox_coors(object_id, 2);
+		// int down_y_raw = obj_bbox_coors(object_id, 3);
+		// int obj_width_raw = right_x_raw - left_x_raw;
+		// int obj_height_raw = down_y_raw - top_y_raw;
+        std::cout << "current bounding box " << left_x_raw << ", "<< top_y_raw << ", "<< right_x_raw << ", "<< down_y_raw << endl;
 		std::vector<int> down_expand_sample_all;
 		down_expand_sample_all.push_back(0);
 		if (whether_sample_bbox_height) // 2D object detection might not be accurate
 		{
 			int down_expand_sample_ranges = max(min(20, obj_height_raw - 90), 20);
+			
 			down_expand_sample_ranges = min(down_expand_sample_ranges, img_height - top_y_raw - obj_height_raw - 1); // should lie inside the image  -1 for c++ index
 			if (down_expand_sample_ranges > 10)																		 // if expand large margin, give more samples.
 				down_expand_sample_all.push_back(round(down_expand_sample_ranges / 2));
+			std::cout << "down_expand_sample_ranges: " << down_expand_sample_ranges <<endl;
 			down_expand_sample_all.push_back(down_expand_sample_ranges);
 		}
 
@@ -133,11 +149,13 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 		ObjectSet raw_obj_proposals;
 		raw_obj_proposals.reserve(100);
 		// 	    int sample_down_expan_id=1;
+		//相当于是把原来的boundingbox在高度上加大一点点
 		for (int sample_down_expan_id = 0; sample_down_expan_id < down_expand_sample_all.size(); sample_down_expan_id++)
 		{
 			int down_expand_sample = down_expand_sample_all[sample_down_expan_id];
 			int obj_height_expan = obj_height_raw + down_expand_sample;
 			int down_y_expan = top_y_raw + obj_height_expan;
+			std::cout << "bounding box height after expand " << down_y_expan << endl;
 			double obj_diaglength_expan = sqrt(obj_width_raw * obj_width_raw + obj_height_expan * obj_height_expan);
 
 			// sample points on the top edges, if edge is too large, give more samples. give at least 10 samples for all edges. for small object, object pose changes lots
@@ -150,7 +168,7 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 				sample_top_pts(0, ii) = top_x_samples[ii];
 				sample_top_pts(1, ii) = top_y_raw;
 			}
-
+            std::cout << " expand some small margin for distance map: " << std::endl;
 			// expand some small margin for distance map  [10 20]
 			int distmap_expand_wid = min(max(min(20, obj_width_raw - 100), 10), max(min(20, obj_height_expan - 100), 10));
 			int left_x_expan_distmap = max(0, left_x_raw - distmap_expand_wid);
@@ -189,14 +207,14 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 				lines_inobj_angles(i) = std::atan2(all_lines_merge_inobj(i, 3) - all_lines_merge_inobj(i, 1), all_lines_merge_inobj(i, 2) - all_lines_merge_inobj(i, 0)); // [-pi/2 -pi/2]
 				edge_mid_pts.row(i).head<2>() = (all_lines_merge_inobj.row(i).head<2>() + all_lines_merge_inobj.row(i).tail<2>()) / 2;
 			}
-
+            std::cout << " canny detection : " << std::endl;
 			// TODO could canny or distance map outside sampling height to speed up!!!!   Then only need to compute canny onces.
 			// detect canny edges and compute distance transform  NOTE opencv canny maybe different from matlab. but roughly same
 			cv::Rect object_bbox = cv::Rect(left_x_expan_distmap, top_y_expan_distmap, width_expan_distmap, height_expan_distmap); //
 			cv::Mat im_canny;
 			cv::Canny(gray_img(object_bbox), im_canny, 80, 200); // low thre, high thre    im_canny 0 or 255   [80 200  40 100]
 			cv::Mat dist_map;
-			cv::distanceTransform(255 - im_canny, dist_map, CV_DIST_L2, 3); // dist_map is float datatype
+			cv::distanceTransform(255 - im_canny, dist_map, CV_DIST_L2, 3); // dist_map is float datatype，这里使用的是欧式距离
 
 			if (whether_plot_detail_images)
 			{
@@ -240,7 +258,7 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 
 						double obj_yaw_esti = obj_yaw_samples[obj_yaw_id];
 
-						Vector2d vp_1, vp_2, vp_3;
+						Vector2d vp_1, vp_2, vp_3; //VPs的图像坐标
 						getVanishingPoints(cam_pose.KinvR, obj_yaw_esti, vp_1, vp_2, vp_3); // for object x y z  axis
 
 						MatrixXd all_vps(3, 2);
@@ -554,4 +572,6 @@ void detect_3d_cuboid::detect_cuboid(const cv::Mat &rgb_img, const Matrix4d &tra
 			cv::waitKey(0);
 		}
 	}
+
+	cout << "Finished detect_cuboid "<< endl;
 }

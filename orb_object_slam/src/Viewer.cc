@@ -19,7 +19,7 @@
 */
 
 #include "Viewer.h"
-
+#include <unistd.h>
 #include "FrameDrawer.h"
 #include "MapDrawer.h"
 #include "Tracking.h"

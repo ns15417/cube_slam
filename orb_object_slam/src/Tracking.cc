@@ -80,7 +80,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
 	double init_x, init_y, init_z, init_qx, init_qy, init_qz, init_qw;
 	n.param<double>("init_x", init_x, 0);
 	n.param<double>("init_y", init_y, 0);
-	n.param<double>("init_z", init_z, 1.7);
+	n.param<double>("init_z", init_z, 0.28); //1.7
 	n.param<double>("init_qx", init_qx, -0.7071);
 	n.param<double>("init_qy", init_qy, 0);
 	n.param<double>("init_qz", init_qz, 0);
@@ -227,7 +227,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
 			mDepthMapFactor = 1.0f / mDepthMapFactor;
 	}
 
-	n.param<double>("obj_det_2d_thre", obj_det_2d_thre, 0.2);
+	n.param<double>("obj_det_2d_thre", obj_det_2d_thre, 0.15);
 	n.param<bool>("build_worldframe_on_ground", build_worldframe_on_ground, false); // transform initial pose and map to ground frame
 	n.param<bool>("triangulate_dynamic_pts", triangulate_dynamic_pts, false);
 
@@ -269,7 +269,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
 			}
 		}
 	}
-
+/*
 	std::string truth_pose_txts = base_data_folder + "/pose_truth.txt";
 	Eigen::MatrixXd truth_cam_poses(5, 8);
 	if (read_all_number_txt(truth_pose_txts, truth_cam_poses))
@@ -291,7 +291,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer,
 		}
 		cout << "Read sampled truth pose size for visualization:  " << mpMapDrawer->truth_poses.rows() << endl;
 	}
-
+*/
 	filtered_ground_height = 0;
 	first_absolute_scale_frameid = 0;
 	first_absolute_scale_framestamp = 0;
@@ -405,6 +405,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const 
 
 cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, int msg_seq_id)
 {
+	std::cout << __FUNCTION__ <<std::endl;
 	mImGray = im;
 
 	if (mImGray.channels() == 3)
@@ -450,7 +451,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
 
 	if (mCurrentFrame.mnId == 0)
 		start_msg_seq_id = msg_seq_id;
-	// if read offline txts, frame id must match!!!
+	// if read offline txts, frame id must match!!! 读取之前检测好的三维框框
 	if (all_offline_object_cubes.size() > 0)
 	{
 		if ((mCurrentFrame.mnId > 0) && (msg_seq_id > 0))					// if msg_seq_id=0 may because the value is not set.
@@ -503,6 +504,7 @@ void Tracking::Track()
 			{
 				if (mono_firstframe_truth_depth_init)
 				{
+					std::cout << "mono_firstframe_truth_depth_init: " << mono_firstframe_truth_depth_init << endl;
 					special_initialization = true;
 					StereoInitialization(); // if first frame has truth depth, we can initialize simiar to stereo/rgbd. create keyframe for it.
 				}
@@ -1544,11 +1546,13 @@ bool Tracking::NeedNewKeyFrame()
 
 void Tracking::DetectCuboid(KeyFrame *pKF)
 {
-	cv::Mat pop_pose_to_ground;			  // pop frame pose to ground frame.  for offline txt, usually local ground.  for online detect, usually init ground.
+	// pop frame pose to ground frame.  for offline txt, usually local ground.  for online detect, usually init ground.
+	cv::Mat pop_pose_to_ground;			
 	std::vector<ObjectSet> all_obj_cubes; // in ground frame, no matter read or online detect
 	std::vector<Vector4d> all_obj2d_bbox;
 	std::vector<double> all_box_confidence;
 	vector<int> truth_tracklet_ids;
+	pop_pose_to_ground = InitToGround.clone();
 
 	if (whether_read_offline_cuboidtxt) // saved object txt usually is usually poped in local ground frame, not the global ground frame.
 	{
@@ -1581,30 +1585,40 @@ void Tracking::DetectCuboid(KeyFrame *pKF)
 	else
 	{
 		std::string data_edge_data_dir = base_data_folder + "/edge_detection/LSD/";
-		std::string data_yolo_obj_dir = base_data_folder + "/mats/filter_match_2d_boxes_txts/";
+		std::string data_yolo_obj_dir = base_data_folder + "/filter_2d_obj_txts/";
+		std::cout << "-----------------Caution: Reading DATA from---------------------- " << endl;
+		std::cout << "current edge dir: " << data_edge_data_dir << endl;
+		std::cout << "current obj dir: "<< data_yolo_obj_dir << endl;
 		char frame_index_c[256];
 		sprintf(frame_index_c, "%04d", (int)pKF->mnFrameId); // format into 4 digit
 
 		// read detected edges
 		Eigen::MatrixXd all_lines_raw(100, 4); // 100 is some large frame number,   the txt edge index start from 0
-		read_all_number_txt(data_edge_data_dir + frame_index_c + "_edge.txt", all_lines_raw);
+		std::string txt_name = data_edge_data_dir + frame_index_c + "_edge.txt";
+		std::cout << "READING From: " << txt_name << endl;
+		read_all_number_txt(txt_name , all_lines_raw);
 
 		// read yolo object detection
 		Eigen::MatrixXd raw_all_obj2d_bbox(10, 5);
 		std::vector<string> object_classes;
 		char obj_2d_txt_postfix[256];
 		sprintf(obj_2d_txt_postfix, "_yolo2_%.2f.txt", obj_det_2d_thre);
-		if (!read_obj_detection_txt(data_yolo_obj_dir + frame_index_c + obj_2d_txt_postfix, raw_all_obj2d_bbox, object_classes))
+		std::string frame_id_str = std::to_string(pKF->mnFrameId);
+		if (!read_obj_detection_txt(data_yolo_obj_dir + frame_id_str + obj_2d_txt_postfix, raw_all_obj2d_bbox, object_classes))
 			ROS_ERROR_STREAM("Cannot read yolo txt  " << data_yolo_obj_dir + frame_index_c + obj_2d_txt_postfix);
-
+        std::cout << __FUNCTION__ << " FInished Reading yolo detection file " << endl;
 		// remove some 2d boxes too close to boundary.
 		int boundary_threshold = 20;
 		int img_width = pKF->raw_img.cols;
 		std::vector<int> good_object_ids;
-		for (int i = 0; i < raw_all_obj2d_bbox.rows(); i++)
-			if ((raw_all_obj2d_bbox(i, 0) > boundary_threshold) && (raw_all_obj2d_bbox(i, 0) + raw_all_obj2d_bbox(i, 2) < img_width - boundary_threshold))
-				good_object_ids.push_back(i);
+		for (int i = 0; i < raw_all_obj2d_bbox.rows(); i++){
+		    cout << "raw_all_obj2d_bbox(i, 0): " << raw_all_obj2d_bbox(i, 0) << endl 
+				 << "raw_all_obj2d_bbox(i, 2): " << raw_all_obj2d_bbox(i, 2) << endl;
+			if ((raw_all_obj2d_bbox(i, 0) > boundary_threshold) && (raw_all_obj2d_bbox(i, 0) + raw_all_obj2d_bbox(i, 2) < img_width - boundary_threshold)
+			   && raw_all_obj2d_bbox(i, 2) > 15 && raw_all_obj2d_bbox(i, 3) > 15)
+				good_object_ids.push_back(i);}
 		Eigen::MatrixXd all_obj2d_bbox_infov_mat(good_object_ids.size(), 5);
+		std::cout << "good object size "<< good_object_ids.size()<< endl;
 		for (size_t i = 0; i < good_object_ids.size(); i++)
 		{
 			all_obj2d_bbox_infov_mat.row(i) = raw_all_obj2d_bbox.row(good_object_ids[i]);
@@ -1616,13 +1630,20 @@ void Tracking::DetectCuboid(KeyFrame *pKF)
 		cv::Mat frame_pose_to_ground = frame_pose_to_init;  // to my ground frame
 		if (!build_worldframe_on_ground)
 			frame_pose_to_ground = InitToGround * frame_pose_to_ground;
+		
+		std::cout << __FUNCTION__ << " InitToGround "<< endl << InitToGround << endl;
+		std::cout << __FUNCTION__ << " frame_pose_to_ground"<<endl<< frame_pose_to_ground << endl;
 
-		Eigen::Matrix4f cam_transToGround = Converter::toMatrix4f(pop_pose_to_ground);
+		//Eigen::Matrix4f cam_transToGround = Converter::toMatrix4f(pop_pose_to_ground);
+		Eigen::Matrix4f cam_transToGround = Converter::toMatrix4f(frame_pose_to_ground);
+
 		detect_cuboid_obj->detect_cuboid(pKF->raw_img, cam_transToGround.cast<double>(), all_obj2d_bbox_infov_mat, all_lines_raw, all_obj_cubes);
 	}
 
 	// copy and analyze results. change to g2o cuboid.
 	pKF->local_cuboids.clear();
+	cout << __FUNCTION__ << "pKF->GetPoseInverse "<< endl
+	     << pKF->GetPoseInverse() << endl;
 	g2o::SE3Quat frame_pose_to_init = Converter::toSE3Quat(pKF->GetPoseInverse()); // camera to init, not always ground.
 	g2o::SE3Quat InitToGround_se3 = Converter::toSE3Quat(InitToGround);
 	for (int ii = 0; ii < (int)all_obj_cubes.size(); ii++)

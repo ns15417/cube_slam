@@ -24,7 +24,7 @@
 #include "Tracking.h"
 #include "LocalMapping.h"
 #include "MapPoint.h"
-
+#include <unistd.h>
 #include "Sim3Solver.h"
 #include "Converter.h"
 #include "Optimizer.h"

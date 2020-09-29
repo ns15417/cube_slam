@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/shinan/cubeslam_ws/devel/include",
+                "/opt/ros/kinetic/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/detect_3d_cuboid/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/line_lbd/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/object_slam/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/orb_object_slam/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/pop_up_wall/include",
+                "/usr/include"
+            ],
+            "name": "Linux",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

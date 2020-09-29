@@ -33,30 +33,46 @@ int main(int argc, char **argv)
     string base_folder = ros::package::getPath("detect_3d_cuboid") + "/data/";
 
     Matrix3d Kalib;
-    Kalib << 529.5000, 0, 365.0000,
-        0, 529.5000, 265.0000,
-        0, 0, 1.0000;
+    // Kalib << 529.5000, 0, 365.0000,
+    //     0, 529.5000, 265.0000,
+    //     0, 0, 1.0000;
+    Kalib << 189.28142, 0., 326.20953;
+  0., 187.21587, 221.15323;
+  0., 0., 1.0;
 
     Matrix4d transToWolrd;
+    // transToWolrd << 1, 0.0011, 0.0004, 0, // hard coded  NOTE if accurate camera roll/pitch, could sample it!
+    //     0, -0.5, 0.866025404, 0,
+    //     0.0011, -0.866025404, -0.5, 0.5,
+    //     0, 0, 0, 1;
     transToWolrd << 1, 0.0011, 0.0004, 0, // hard coded  NOTE if accurate camera roll/pitch, could sample it!
         0, -0.3376, 0.9413, 0,
-        0.0011, -0.9413, -0.3376, 1.35,
+        0.0011, -0.9413, -0.3376, 0.5,
         0, 0, 0, 1;
+    // transToWolrd << 1, 0.0, 0.0004, 0, // hard coded  NOTE if accurate camera roll/pitch, could sample it!
+    // 0, 1, 0., 0,
+    // 0., 0, 1, 1,
+    // 0, 0, 0, 1;
 
     MatrixXd obj_bbox_coors(1, 5);                // hard coded
-    obj_bbox_coors << 188, 189, 201, 311, 0.8800; // [x y w h prob]
+    // obj_bbox_coors << 188, 189, 201, 311, 0.8800; // [x y w h prob]
+    obj_bbox_coors << 358,319, 493, 377,0.8;
     obj_bbox_coors.leftCols<2>().array() -= 1;    // change matlab coordinate to c++, minus 1
 
-    int frame_index = 0;
+    int frame_index = 495;
     char frame_index_c[256];
     sprintf(frame_index_c, "%04d", frame_index); // format into 4 digit
 
     // read images
+    std::string img_name = base_folder + frame_index_c + "_rgb_raw.jpg";
+    cout << "Reading IMage name: " << img_name << endl;
     cv::Mat rgb_img = cv::imread(base_folder + frame_index_c + "_rgb_raw.jpg", 1);
 
     // read edges
     Eigen::MatrixXd all_lines_raw(100, 4); // 100 is some large frame number,   the txt edge index start from 0
-    read_all_number_txt(base_folder + "edge_detection/LSD/" + frame_index_c + "_edge.txt", all_lines_raw);
+    std::string tmpname = base_folder + "edge_detection/LSD/" + frame_index_c + "_edge.txt";
+    cout << "tmpname:" << tmpname <<endl;
+    read_all_number_txt(tmpname, all_lines_raw);
 
     detect_3d_cuboid detect_cuboid_obj;
     detect_cuboid_obj.whether_plot_detail_images = false;

@@ -1,1 +1,4 @@
-*~
+object_slam/data/*.png
+*.jpg
+*.txt
+*.png

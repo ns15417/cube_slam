@@ -28,7 +28,7 @@
 #include <cv_bridge/cv_bridge.h>
 
 #include <opencv2/core/core.hpp>
-
+#include <opencv2/opencv.hpp>
 #include "System.h"
 #include "Parameters.h"
 #include "tictoc_profiler/profiler.hpp"
@@ -51,10 +51,10 @@ int main(int argc, char **argv)
     ros::start();
     ca::Profiler::enable();
 
-    if (argc != 3)
+    if (argc != 4)
     {
         cerr << endl
-             << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;
+             << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings start_id" << endl;
         ros::shutdown();
         return 1;
     }
@@ -64,12 +64,12 @@ int main(int argc, char **argv)
     nh.param<bool>("enable_viewer", ORB_SLAM2::enable_viewer, true);
     nh.param<bool>("enable_viewmap", ORB_SLAM2::enable_viewmap, true);
     nh.param<bool>("enable_viewimage", ORB_SLAM2::enable_viewimage, true);
-    nh.param<bool>("enable_loop_closing", enable_loop_closing, true);
+    nh.param<bool>("enable_loop_closing", enable_loop_closing, false);
     nh.param<bool>("parallel_mapping", ORB_SLAM2::parallel_mapping, true);
 
-    nh.param<bool>("whether_detect_object", ORB_SLAM2::whether_detect_object, false);
+    nh.param<bool>("whether_detect_object", ORB_SLAM2::whether_detect_object, true);
     nh.param<bool>("whether_read_offline_cuboidtxt", ORB_SLAM2::whether_read_offline_cuboidtxt, false);
-    nh.param<bool>("associate_point_with_object", ORB_SLAM2::associate_point_with_object, false);
+    nh.param<bool>("associate_point_with_object", ORB_SLAM2::associate_point_with_object, true);
 
     nh.param<bool>("whether_dynamic_object", ORB_SLAM2::whether_dynamic_object, false);
     nh.param<bool>("remove_dynamic_features", ORB_SLAM2::remove_dynamic_features, false);
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     nh.param<bool>("enable_ground_height_scale", ORB_SLAM2::enable_ground_height_scale, false);
     nh.param<bool>("use_dynamic_klt_features", ORB_SLAM2::use_dynamic_klt_features, false);
 
-    nh.param<bool>("bundle_object_opti", ORB_SLAM2::bundle_object_opti, false);
+    nh.param<bool>("bundle_object_opti", ORB_SLAM2::bundle_object_opti, true);
     nh.param<double>("camera_object_BA_weight", ORB_SLAM2::camera_object_BA_weight, 1.0);
     nh.param<double>("object_velocity_BA_weight", ORB_SLAM2::object_velocity_BA_weight, 1.0);
 
@@ -95,15 +95,16 @@ int main(int argc, char **argv)
 
     std::string scene_name;
     ros::param::get("/scene_name", scene_name);
-    ros::param::get("/base_data_folder", ORB_SLAM2::base_data_folder);
-
+    //ros::param::get("/base_data_folder", ORB_SLAM2::base_data_folder);
+    std::string folder = "/media/shinan/DATA/ROSbag/Cubeslam/mydata/";
+    ORB_SLAM2::base_data_folder = folder;
     if (scene_name.compare(std::string("kitti")) == 0)
         ORB_SLAM2::scene_unique_id = ORB_SLAM2::kitti;
-
+    
     cout << "Base_data_folder:  " << ORB_SLAM2::base_data_folder << endl;
 
     std::string packagePath = ros::package::getPath("orb_object_slam");
-
+    cout << "packagePath: " << packagePath << endl;
     if (!enable_loop_closing)
         ROS_WARN_STREAM("Turn off global loop closing!!");
     else
@@ -111,12 +112,28 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
 
     ORB_SLAM2::System SLAM(argv[1], argv[2], ORB_SLAM2::System::MONOCULAR, enable_loop_closing);
-
+    cout << "Fiinished Initialization of SLAM " << endl;
+    #ifdef ROS
     ImageGrabber igb(&SLAM);
-
     ros::Subscriber sub = nh.subscribe("/camera/image_raw", 10, &ImageGrabber::GrabImage, &igb);
-
-    ros::spin(); //block here till I ctrl-C
+    #else
+    //添加图像的部分
+    int start_id = std::stoi(argv[3]);
+    for(int i=start_id; i<15387;i++){
+        char frame_id[256];
+        sprintf(frame_id,"%04d",i);
+        std::string imgname = ORB_SLAM2::base_data_folder + "/raw_imgs/"+frame_id+"_rgb_raw.jpg";
+        cout << "Reading Image: " << imgname << endl;
+        cv::Mat curimg = cv::imread(imgname,1);
+        if(curimg.empty())
+        {
+            std::cout << "    ---> curimg is empty "<< endl;
+        }
+        double time = 2.0;
+        SLAM.TrackMonocular(curimg,time,i);
+    }
+    #endif
+    //ros::spin(); //block here till I ctrl-C
 
     // Stop all threads
     SLAM.Shutdown();

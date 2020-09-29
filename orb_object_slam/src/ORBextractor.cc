@@ -58,7 +58,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
-
+#include <iostream>
 #include "ORBextractor.h"
 
 using namespace cv;
@@ -775,7 +775,6 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
         const int minBorderY = minBorderX;
         const int maxBorderX = mvImagePyramid[level].cols - EDGE_THRESHOLD + 3; // don't extrac features close to boundary.
         const int maxBorderY = mvImagePyramid[level].rows - EDGE_THRESHOLD + 3;
-
         vector<cv::KeyPoint> vToDistributeKeys;
         vToDistributeKeys.reserve(nfeatures * 10);
 
@@ -805,7 +804,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
                     continue;
                 if (maxX > maxBorderX)
                     maxX = maxBorderX;
-
+                //cout << "iniY, maxY, iniX, maxX "<< iniY<<", "<< maxY << ", " << iniX << ", "<< maxX<< endl;
                 vector<cv::KeyPoint> vKeysCell; // extract fast features for a given region.
                 FAST(mvImagePyramid[level].rowRange(iniY, maxY).colRange(iniX, maxX),
                      vKeysCell, iniThFAST, true);

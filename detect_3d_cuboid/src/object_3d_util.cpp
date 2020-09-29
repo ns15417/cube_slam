@@ -133,6 +133,7 @@ void plot_image_with_cuboid(cv::Mat &plot_img, const cuboid *cube_obj)
 // each line is x1 y1 x2 y2   color: Scalar(255,0,0) eg
 void plot_image_with_edges(const cv::Mat &rgb_img, cv::Mat &output_img, MatrixXd &all_lines, const cv::Scalar &color)
 {
+    cout << __FUNCTION__<< endl;
     output_img = rgb_img.clone();
     for (int i = 0; i < all_lines.rows(); i++)
         cv::line(output_img, cv::Point(all_lines(i, 0), all_lines(i, 1)), cv::Point(all_lines(i, 2), all_lines(i, 3)), cv::Scalar(255, 0, 0), 2, 8, 0);

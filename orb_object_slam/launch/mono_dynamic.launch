@@ -13,7 +13,7 @@
    <param name="parallel_mapping" value="true" />  # if false, may reduce bag rate
    
    <rosparam file="$(find orb_object_slam)/launch/object_params/kitti.yaml" command="load"/>   # initial pose, folder name
-   <param name="base_data_folder" value="/home/shichao/ysc_space/dataset/processed_third/kitti_tracking/training/0018" />
+   <param name="base_data_folder" value="/media/shinan/DATA/ROSbag/Cubeslam/2/Seq_07/" />
 
    <param name="whether_detect_object" value="true" />
    <param name="whether_read_offline_cuboidtxt" value="true" />  # for kitti, I read offline data.
@@ -39,7 +39,7 @@
    <param name="ba_dyna_obj_cam" value="true" />
    
    # for depth initialization
-   <param name="mono_firstframe_truth_depth_init" value="true" />
+   <param name="mono_firstframe_truth_depth_init" value="false" />
    <param name="mono_firstframe_Obj_depth_init" value="false" />
    <param name="mono_allframe_Obj_depth_init" value="false" />   # may not need for kitti
    

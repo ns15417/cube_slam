@@ -40,7 +40,7 @@ void Tracking::ReadAllObjecttxt()
 		pred_frame_obj_txts = base_data_folder + "/pred_3d_obj_matched_txt/" + frame_index_c + "_3d_cuboids.txt";
 		if (use_truth_trackid)
 			pred_frame_obj_txts = base_data_folder + "/pred_3d_obj_matched_tracked_txt/" + frame_index_c + "_3d_cuboids.txt";
-
+		cout << "Already read object file: " << pred_frame_obj_txts<< endl;
 		//3d cuboid txts:  each row:  [cuboid_center(3), yaw, cuboid_scale(3), [x1 y1 w h]], prob
 		int data_width = 12;
 		if (use_truth_trackid)
@@ -52,7 +52,7 @@ void Tracking::ReadAllObjecttxt()
 				for (int ii = 0; ii < pred_frame_objects.rows(); ii++)
 					pred_frame_objects(ii, data_width - 1) = 1;
 
-			all_offline_object_cubes.push_back(pred_frame_objects);
+			all_offline_object_cubes.push_back(pred_frame_objects); //所有在线下提取出来的方框，只针对与单张图片
 
 			if (!use_truth_trackid)
 				if (pred_frame_objects.rows() > 0)

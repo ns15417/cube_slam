@@ -196,6 +196,7 @@ void vert_stack_m_self(MatrixXf &a_in, const MatrixXf &b_in)
 template <class T>
 bool read_all_number_txt(const std::string txt_file_name, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> &read_number_mat)
 {
+    std::cout << "Reading data from " << txt_file_name <<std::endl;
     if (!std::ifstream(txt_file_name))
     {
         std::cout << "ERROR!!! Cannot read txt file " << txt_file_name << std::endl;
@@ -235,6 +236,7 @@ template bool read_all_number_txt(const std::string, MatrixXi &);
 
 bool read_obj_detection_txt(const std::string txt_file_name, Eigen::MatrixXd &read_number_mat, std::vector<std::string> &all_strings)
 {
+    std::cout << __FUNCTION__ << std::endl;
     if (!std::ifstream(txt_file_name))
     {
         std::cout << "ERROR!!! Cannot read txt file " << txt_file_name << std::endl;
@@ -273,6 +275,7 @@ bool read_obj_detection_txt(const std::string txt_file_name, Eigen::MatrixXd &re
 
 bool read_obj_detection2_txt(const std::string txt_file_name, Eigen::MatrixXd &read_number_mat, std::vector<std::string> &all_strings)
 {
+    std::cout << __FUNCTION__ << std::endl;
     if (!std::ifstream(txt_file_name))
     {
         std::cout << "ERROR!!! Cannot read txt file " << txt_file_name << std::endl;

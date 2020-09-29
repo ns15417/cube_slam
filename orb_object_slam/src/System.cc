@@ -28,7 +28,7 @@
 #include "LoopClosing.h"
 #include "KeyFrameDatabase.h"
 #include "Viewer.h"
-
+#include <unistd.h>
 #include "Converter.h"
 #include <thread>
 #include <pangolin/pangolin.h>
@@ -68,7 +68,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     //Load ORB Vocabulary
     cout << endl
-         << "Loading ORB Vocabulary. This could take a while..." << endl;
+         << "Loading ORB Vocabulary. This could take a while... from " << endl << strVocFile << endl;
 
     mpVocabulary = new ORBVocabulary();
     bool bVocLoad = false; // chose loading method based on file extension
@@ -221,6 +221,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
 cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, int msg_seq_id)
 {
+    std::cout << "Get image to Track" << endl;
     if (mSensor != MONOCULAR)
     {
         cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular." << endl;

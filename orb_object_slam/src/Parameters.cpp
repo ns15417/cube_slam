@@ -35,7 +35,7 @@ bool whether_dynamic_object = false;
 bool remove_dynamic_features = false;
 bool use_dynamic_klt_features = false;
 
-bool mono_firstframe_truth_depth_init = false;
+bool mono_firstframe_truth_depth_init = false; //第一帧图像是否有对应的深度
 bool mono_firstframe_Obj_depth_init = false;
 bool mono_allframe_Obj_depth_init = false;
 

@@ -6,14 +6,13 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "/home/shichao/ysc_space/public/cubeslam_ws/devel/include",
+                "/home/shinan/cubeslam_ws/devel/include",
                 "/opt/ros/kinetic/include",
-                "/home/shichao/ysc_space/public/cubeslam_ws/src/cube_slam/detect_3d_cuboid/include",
-                "/home/shichao/ysc_space/public/cubeslam_ws/src/cube_slam/line_lbd/include",
-                "/home/shichao/ysc_space/public/cubeslam_ws/src/cube_slam/object_slam/include",
-                "/home/shichao/ysc_space/public/cubeslam_ws/src/cube_slam/orb_object_slam/include",
-                "/home/shichao/ysc_space/public/cubeslam_ws/src/cube_slam/pop_up_wall/include",
-                "/home/shichao/ysc_space/public/cubeslam_ws/src/cube_slam/dependency/tictoc_profiler/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/detect_3d_cuboid/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/line_lbd/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/object_slam/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/orb_object_slam/include",
+                "/home/shinan/cubeslam_ws/src/cube_slam/pop_up_wall/include",
                 "/usr/include"
             ],
             "name": "Linux",
